@@ -1,0 +1,29 @@
+@import "/stylesheets/bootstrap.min.css";
+
+@bodyBackground: rgb(255, 254, 245);
+
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: @bodyBackground;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.chatbox {
+    height: 620px;
+    background: white;
+    overflow-y: scroll;
+}
+
+#userlist {
+    background: @bodyBackground;
+}
+
+.shadow {
+   -moz-box-shadow:    inset 0 0 5px rgb(155, 155, 155);
+   -webkit-box-shadow: inset 0 0 5px rgb(155, 155, 155);
+   box-shadow:         inset 0 0 5px rgb(155, 155, 155);
+}

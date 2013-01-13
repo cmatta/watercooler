@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  div.container-fluid
+      div.row
+        div#messages.chatbox.span9.shadow
+        div#userlist.chatbox.span2
+      div.row
+        div#input.span11
+          div.input-append
+            input#msg.span9(type="text")
+
+  script(src="/javascripts/client.js")
