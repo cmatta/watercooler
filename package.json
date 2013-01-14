@@ -15,7 +15,13 @@
     "less-middleware": "*",
     "socket.io": "*",
     "connect-mongo": "*",
-    "mongoose": "*"
+    "mongoose": "*",
+    "passport": "*",
+    "passport-twitter": "*",
+    "mongoose-findorcreate": "*",
+    "underscore": "*",
+    "connect": "*",
+    "cookie": "*"
   }
 
 }

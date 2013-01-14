@@ -4,5 +4,11 @@
  */
 
 exports.index = function(req, res){
-  res.render('index', { title: 'Watercooler' });
+  if(req.user){
+    res.render('index', { title: 'Watercooler',
+                          user: req.user });
+  } else {
+    res.render('login', { title: 'Log in' });
+  }
+  
 };

@@ -1,13 +1,16 @@
 extends layout
 
 block content
-  div.container-fluid
-      div.row
-        div#messages.chatbox.span9.shadow
-        div#userlist.chatbox.span2
-      div.row
-        div#input.span11
-          div.input-append
-            input#msg.span9(type="text")
+  script(src="/socket.io/socket.io.js")
+  small Logged in as <span id="user_name">#{user.displayName}</span> (<a href="/logout">Log Out</a>)
+  div.row
+    div#messages.chatbox.span9.well
+    div#userlist.chatbox.span2
+  div.row
+    div.input-append
+      div#input.span11
+        div.input-append
+          input#msg.appendedInputButton.span9(type="text")
+          button#msg-send.btn(type="button") Send
 
   script(src="/javascripts/client.js")
