@@ -24,7 +24,7 @@ var app = express()
   , server_port = 8888
   , mongo_db_string = 'mongodb://127.0.0.1/'
   , mongo_db = 'watercooler'
-  , host = '127.0.0.1';
+  , host = '1306fifteen.dyndns.org';
 
 app.configure('production', function(){
   server_port = 80

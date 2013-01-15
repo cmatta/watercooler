@@ -8,7 +8,7 @@ $(document).ready(function() {
   
   // Create the chat connection object, as well as the references to our DOM 
   // handlers for input and recording output
-  var chat = io.connect('http://127.0.0.1:8888/chat')
+  var chat = io.connect('http://1306fifteen.dyndns.org:8888/chat')
     , $messages = $('#messages>ul')
     , $input = $('#msg')
     , $button = $('#submit')
@@ -25,6 +25,7 @@ $(document).ready(function() {
       chat.emit('user message', msg);
       parseMessage(msg, function(message){
         $messages.append('<li><span>Me</span> ' + message + '</li>');
+        $("#messages").scrollTop($("#messages")[0].scrollHeight); 
       });
       
     }
@@ -46,7 +47,8 @@ $(document).ready(function() {
   })
   .on('user message', function(data) {
     parseMessage(data.msg, function(message){
-      $messages.append('<li><span>' + data.id + '</span> ' + message + '</li>')
+      $messages.append('<li><span>' + data.id + '</span> ' + message + '</li>');
+      $("#messages").scrollTop($("#messages")[0].scrollHeight);
     });
     
   })
