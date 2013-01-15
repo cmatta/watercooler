@@ -2,7 +2,7 @@
 'use strict'
 
 // Wait for the DOM to load before taking action
-$(function() {
+$(document).ready(function() {
   // Setup
   // -----
   
@@ -42,6 +42,7 @@ $(function() {
     console.error('unable to connect to chat', reason);
   }).on('connected', function(user_name) {
     $messages.append('<li class="status"><span>Connected</span> ' + user_name + '</li>');
+    updateUserList();
   })
   .on('user message', function(data) {
     parseMessage(data.msg, function(message){
@@ -50,19 +51,27 @@ $(function() {
     
   })
   .on('disconnected', function(user_name) {
-    $messages.append('<li class="status"><span>Disconnected</span> ' + user_name + '</li>')
-  })
-  .on('update users', function(connected_users){
-    console.log(connected_users);
-    var user_list = "<small>Who's Here</small><ul>";
-    _.each(connected_users, function(user){
-      user_list += "<li>"+user+"</li>";
-    });
-    user_list += "</ul>";
-    
-    $userlist.html(user_list);
+    $messages.append('<li class="status"><span>Disconnected</span> ' + user_name + '</li>');
+    updateUserList();
   });
-  
+
+  function updateUserList(){
+    $.get("/connected_users", function(connected_users){
+      if(!connected_users){
+        console.log("Failed to get user list");
+        return false;
+      }
+      console.log(connected_users);
+      var user_list = "<small>Who's Here</small><ul>";
+      _.each(connected_users, function(user){
+        user_list += "<li>"+user+"</li>";
+      });
+      user_list += "</ul>";
+    
+      $userlist.html(user_list);
+      return false;
+    });
+  }
 
   // User interaction
   // ----------------

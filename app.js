@@ -115,8 +115,6 @@ app.configure('development', function(){
   app.use(express.errorHandler());
 });
 
-app.get('/', routes.index);
-
 // Redirect the user to Twitter for authentication.  When complete, Twitter
 // will redirect the user back to the application at
 //   /auth/twitter/callback
@@ -173,7 +171,7 @@ chat.on('connection', function(socket){
       connected_users.push(user_name);
       // Send the username and user list
       socket.broadcast.emit('connected', user_name);
-      socket.broadcast.emit('update users', connected_users);
+      // socket.broadcast.emit('update users', connected_users);
     });
     
     
@@ -190,10 +188,21 @@ chat.on('connection', function(socket){
     socket.get('user_name', function(err, user_name){
       connected_users.splice(connected_users.indexOf(user_name), 1);
       socket.broadcast.emit('disconnected', user_name);
-      socket.broadcast.emit('update users', connected_users);
+      // socket.broadcast.emit('update users', connected_users);
     });
   });
 });
+
+app.get('/', routes.index);
+app.get('/connected_users', function(req, res){
+  if(req.isAuthenticated){
+    console.log("User list requested...");
+    res.send(connected_users);
+  } else {
+    res.send("Error 401");
+  }
+  
+})
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + server.address().port);
