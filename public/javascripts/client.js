@@ -1,9 +1,3 @@
-// Client side support
-// -------------------
-
-// This file contains all of the relevant client side code to communicate through 
-// `chat.io` to the server, and in turn all other connected clients
-
 ;(function() {
 'use strict'
 
@@ -15,9 +9,10 @@ $(function() {
   // Create the chat connection object, as well as the references to our DOM 
   // handlers for input and recording output
   var chat = io.connect('http://127.0.0.1:8888/chat')
-    , $messages = $('#messages')
+    , $messages = $('#messages>ul')
     , $input = $('#msg')
     , $button = $('#submit')
+    , $userlist = $('#userlist')
     , user_name = $('#user_name').text();
   
   //###send
@@ -28,12 +23,14 @@ $(function() {
     var msg = $input.val().trim()
     if (msg) {
       chat.emit('user message', msg);
-      console.log(chat.socket.handshake.user_name);
-      $messages.append('<li><span><b>' + user_name + '</b></span> ' + msg + '</li>')
+      parseMessage(msg, function(message){
+        $messages.append('<li><span>Me</span> ' + message + '</li>');
+      });
+      
     }
     $input.val('')
   }
-  
+
   // chat.io listeners
   // --------------------
   
@@ -43,17 +40,30 @@ $(function() {
   // with the actual text of the message, add it to the DOM message container
   chat.on('connect_failed', function(reason){
     console.error('unable to connect to chat', reason);
-  })
-  .on('connected', function(id) {
-    $messages.append('<li class="status"><span>Connected</span> ' + id + '</li>')
+  }).on('connected', function(user_name) {
+    $messages.append('<li class="status"><span>Connected</span> ' + user_name + '</li>');
   })
   .on('user message', function(data) {
-    $messages.append('<li><span>' + data.id + '</span> ' + data.msg + '</li>')
+    parseMessage(data.msg, function(message){
+      $messages.append('<li><span>' + data.id + '</span> ' + message + '</li>')
+    });
+    
   })
-  .on('disconnected', function(id) {
-    $messages.append('<li class="status"><span>Disconnected</span> ' + id + '</li>')
+  .on('disconnected', function(user_name) {
+    $messages.append('<li class="status"><span>Disconnected</span> ' + user_name + '</li>')
+  })
+  .on('update users', function(connected_users){
+    console.log(connected_users);
+    var user_list = "<small>Who's Here</small><ul>";
+    _.each(connected_users, function(user){
+      user_list += "<li>"+user+"</li>";
+    });
+    user_list += "</ul>";
+    
+    $userlist.html(user_list);
   });
   
+
   // User interaction
   // ----------------
   
@@ -68,7 +78,17 @@ $(function() {
   
   //###click listener
   // Listen to a `click` event on the submit button to the message through
-  $("#msg-send").click(send)
+  $("#msg-send").click(send);
+
+  function parseMessage(message, callback){
+    var img_regexp = new RegExp('\.jpg$|\.jpeg$|\.png$|\.gif$', 'i');
+    if(img_regexp.test(message)){
+      var return_message = '<a class="message-image" href="'+message+'" target="_blank"><img src="'+message+'"></a>';
+      callback(return_message);
+    } else{
+      callback(message);
+    }
+  }
 })
 
 }).call(this);

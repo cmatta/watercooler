@@ -16,8 +16,23 @@ a {
   height: 620px;
   background: white;
   overflow-y: scroll;
+  word-wrap: break-word;
 }
 
 #userlist {
     background: @bodyBackground;
+}
+
+#messages>ul {
+  list-style-type: none;
+}
+
+#messages>ul>li>span {
+  font-weight: bold;
+  padding: 5px;
+  border: 1px grey;
+}
+
+#messages img {
+  max-width: 400px;
 }

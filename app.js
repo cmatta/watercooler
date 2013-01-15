@@ -18,11 +18,23 @@ var app = express()
   , passport = require('passport')
   , twitterStrategy = require('passport-twitter').Strategy
   , Users = require('./models/Users').Users
+  , URI = require('URIjs')
   , parseSignedCookie = require('connect').utils.parseSignedCookie
-  , cookie = require('cookie');
+  , cookie = require('cookie')
+  , server_port = 8888
+  , mongo_db_string = 'mongodb://127.0.0.1/'
+  , mongo_db = 'watercooler'
+  , host = '127.0.0.1';
 
-server.listen(8888);
-mongoose.connect('127.0.0.1', 'watercooler');
+app.configure('production', function(){
+  server_port = 80
+  , host = 'watercooler-chat.herokuapp.com'
+  , mongo_db_string = 'mongodb://watercooler:sh4rp13@ds047447.mongolab.com:47447/'
+  , mongo_db = 'heroku_app10937405'
+});
+
+server.listen(server_port);
+mongoose.connect(mongo_db_string+mongo_db);
 
 var session_settings = {
   db: 'watercooler',
@@ -30,13 +42,14 @@ var session_settings = {
   cookie_secret: 'hippiejohnny'
 }
 
+// passport middleware
 passport.use(new twitterStrategy({
     consumerKey: 'ceuQboT48EiYqCdGZ7ZKaw',
     consumerSecret: '2Ifgixahv8zeGthHV7rzro11msn5VH99ufFcMGpioA',
-    callbackURL: "http://127.0.0.1:8888/auth/twitter/callback"
+    callbackURL: "http://"+host+":"+server_port+"/auth/twitter/callback"
   },
   function(token, tokenSecret, profile, done){
-
+    // Look for the user in the database
     Users.findOne({"provider": profile.provider, "provider_id": profile.id}, function(err, foundUser){
       if(foundUser){
         console.log("User %s found.", foundUser.displayName);
@@ -123,19 +136,6 @@ app.get('/logout', function(req, res){
 
 // Configure socket.io authorization settings for 'chat' namespace
 io.configure(function(){
-  // io.set('authorization', function(data, accept){
-  //   data.cookie = cookie.parse(data.headers.cookie);
-  //   data.sessionId = parseSignedCookie(data.cookie['express.sid'].split('.')[0], session_settings.cookie_secret);
-  //   sessionStore.get(data.sessionId, function(err, session){
-  //     if(err || !session){
-  //       accept(err, false);
-  //     } else {
-  //       data.session = session;
-  //       accept(null, true);
-  //     }
-  //   });
-  // });
-
   io.of('/chat').authorization(function(data, accept){
     data.cookie = cookie.parse(data.headers.cookie);
     data.sessionId = parseSignedCookie(data.cookie['express.sid'], session_settings.cookie_secret);
@@ -153,33 +153,47 @@ io.configure(function(){
 });
 
 var chat = io.of('/chat');
+var connected_users = [];
 
 chat.on('connection', function(socket){
   var hs = socket.handshake;
+
   Users.findById(hs.session.passport.user, function(err, user){
     if(err){
       console.error("User not found with object id %s", hs.session.passport.user);
-      hs.user_name = socket.id;
+      socket.set('user_name', socket.id);
     } else{
-      hs.user_name = user.displayName;
+      // Split the name into first name last initial. Seems friendlier.
+      var names = user.displayName.split(' ');
+      var nickname = names[0]+' '+names[1].split('')[0]+'.';
+      socket.set('user_name', nickname, function(){ socket.emit('ready'); });
     }
-    // someone connected
-    socket.broadcast.emit('connected', hs.user_name);
-  });
 
+    socket.get('user_name', function(err, user_name){
+      connected_users.push(user_name);
+      // Send the username and user list
+      socket.broadcast.emit('connected', user_name);
+      socket.broadcast.emit('update users', connected_users);
+    });
+    
+    
+  });
   // message sent
   socket.on('user message', function(data){
-    socket.broadcast.emit('user message', {
-      id: hs.user_name,
-      msg: data
+    socket.get('user_name', function(err, user_name){
+      socket.broadcast.emit('user message', {id: user_name, msg: data});
     });
-  })
+  });
   // Someone has disconnected
   socket.on('disconnect', function() {
-    socket.broadcast.emit('disconnected', hs.user_name)
+    // get their username and remove it from the connected_users
+    socket.get('user_name', function(err, user_name){
+      connected_users.splice(connected_users.indexOf(user_name), 1);
+      socket.broadcast.emit('disconnected', user_name);
+      socket.broadcast.emit('update users', connected_users);
+    });
   });
 });
-
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + server.address().port);
