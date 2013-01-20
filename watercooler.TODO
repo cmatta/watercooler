@@ -1,0 +1,12 @@
+ Watercooler Chat:
+ ☐ set messages layout
+   ☐ add time to messages
+ ✔ setup persistence @done (13-01-19 21:32)
+   ✔ mongodb messages collection @done (13-01-19 21:32)
+   ✔ load today's messages @done (13-01-19 21:32)
+ ✔ get "who's here working" @done (13-01-19 15:37)
+ ☐ get drag and drop to post images/urls/videos working
+ ☐ Use bootstrap to show alerts: https://github.com/JasonGiedymin/express-messages-bootstrap
+ ☐ Add room support
+ ☐ messages should show twitter icon
+ ☐ user names can be a header on the top of the post
