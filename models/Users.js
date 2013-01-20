@@ -5,6 +5,15 @@ var UsersSchema = new Schema({
         "provider": {type: String, required: true },
         "provider_id": {type: String, required: true},
         "displayName": {type: String, requred: true},
+        "username": {type: String, required: true},
+        "user_images": [
+            { 
+                "value": {type: String }
+            }
+        ],
+        "nickname": {type: String},
+        "location": {type: String},
+        "join_date": {type: Date, required: true},
         "name" : {
             "familyName": {type: String},
             "givenName": {type: String},

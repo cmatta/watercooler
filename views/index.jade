@@ -1,19 +1,25 @@
 extends layout
 
 block content
-  script(src="/socket.io/socket.io.js")
-  small Logged in as <span id="user_name">#{user.displayName}</span> (<a href="/logout">Log Out</a>)
-  div.row
-    div#messages.chatbox.span9.well
-      ul
-    div#userlist.chatbox.span2
-      small Who's Here
-      ul
-  div.row
-    div.input-append
-      div#input.span11
-        div.input-append
-          input#msg.appendedInputButton.span9(type="text")
-          button#msg-send.btn(type="button") Send
-
+  div#main.container-fluid
+    script(src="/socket.io/socket.io.js")
+    div.row
+      div.span2
+      div.span8
+        small Logged in as <span id="user_name">#{user.displayName}</span> (<a href="/logout">Log Out</a>)
+      div.span2
+    div.row
+      div.span2
+      div#messages.chatbox.well.span8
+        ul#message-list
+      div#userlist.chatbox.span2
+        small Who's Here
+        ul
+    div.row
+      div.span2
+      div.input-append
+        div#input.span8
+          div.input-append
+            input#msg.appendedInputButton.span9(type="text")
+            button#msg-send.btn(type="button") Send
   script(src="/javascripts/client.js")

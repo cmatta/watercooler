@@ -7,9 +7,8 @@ var express = require('express')
   , routes = require('./routes')
   , http = require('http')
   , path = require('path')
-  , _ = require('underscore');
-
-var app = express()
+  , _ = require('underscore')
+  , app = express()
   , http = require('http')
   , server = http.createServer(app)
   , io = require('socket.io').listen(server)
@@ -17,14 +16,15 @@ var app = express()
   , mongoStore = require('connect-mongo')(express)
   , passport = require('passport')
   , twitterStrategy = require('passport-twitter').Strategy
-  , Users = require('./models/Users').Users
   , URI = require('URIjs')
   , parseSignedCookie = require('connect').utils.parseSignedCookie
   , cookie = require('cookie')
   , server_port = 8888
   , mongo_db_string = 'mongodb://127.0.0.1/'
   , mongo_db = 'watercooler'
-  , host = '1306fifteen.dyndns.org';
+  , host = '1306fifteen.dyndns.org'
+  , users = require('./controllers/users')
+  , messages = require('./controllers/messages');
 
 app.configure('production', function(){
   server_port = 80
@@ -50,37 +50,25 @@ passport.use(new twitterStrategy({
   },
   function(token, tokenSecret, profile, done){
     // Look for the user in the database
-    Users.findOne({"provider": profile.provider, "provider_id": profile.id}, function(err, foundUser){
-      if(foundUser){
-        console.log("User %s found.", foundUser.displayName);
-        done(null, foundUser);
+    users.findOrCreate(profile, function(err, user){
+      if(user){
+        done(null, user);
       } else {
-        console.log("Profile:");
-        console.log(profile);
-        var newUser = new Users();
-        newUser.provider = profile.provider;
-        newUser.provider_id = profile.id;
-        newUser.displayName = profile.displayName;
-        newUser.name = profile.name;
-        newUser.emails = profile.emails;
-
-        newUser.save(function(err){
-          if(err){ return done(err);}
-
-          console.log("New user %s created", newUser.displayName);
-          done(null, newUser);
-        });
+        console.warn("Error finding or creating user: "+user);
+        return done(err);
       }
+      
     });
   }
 ));
 
 passport.serializeUser(function(user, done) {
+  console.log(user);
   done(null, user._id);
 });
 
 passport.deserializeUser(function(id, done) {
-  Users.findById(id, function(err, user) {
+  users.findById(id, function(err, user) {
     done(err, user);
   });
 });
@@ -139,10 +127,13 @@ io.configure(function(){
     data.sessionId = parseSignedCookie(data.cookie['express.sid'], session_settings.cookie_secret);
     sessionStore.get(data.sessionId, function(err, session){
       if(!session){
+        console.log("Sorry, couldn't find this session in the session store.");
         accept('No session', false);
       } else if(err){
+        console.log(err);
         accept('Error: '+err, false);
       } else {
+        console.log("Session found in session store");
         data.session = session;
         accept(null, true);
       }
@@ -151,58 +142,82 @@ io.configure(function(){
 });
 
 var chat = io.of('/chat');
-var connected_users = [];
+var connected_users = {};
 
 chat.on('connection', function(socket){
   var hs = socket.handshake;
+  var user_id = hs.session.passport.user;
 
-  Users.findById(hs.session.passport.user, function(err, user){
+  users.findById(user_id, function(err, user){
     if(err){
       console.error("User not found with object id %s", hs.session.passport.user);
       socket.set('user_name', socket.id);
     } else{
+      var nickname;
       // Split the name into first name last initial. Seems friendlier.
-      var names = user.displayName.split(' ');
-      var nickname = names[0]+' '+names[1].split('')[0]+'.';
+      if(user.displayName.match('\s')){
+        var names = user.displayName.split(' ');
+        nickname = names[0]+' '+names[1].split('')[0]+'.';
+      } else {
+        nickname = user.displayName;
+      }
+
+      if(_.isUndefined(user.nickname)){
+        user.nickname = nickname;
+        user.save(function(err){
+          if(!err){
+            console.log("Updated nickname for "+ user.displayName);
+          } else {
+            console.warn(err);
+          }
+
+        });
+      }
+
       socket.set('user_name', nickname, function(){ socket.emit('ready'); });
     }
 
     socket.get('user_name', function(err, user_name){
-      connected_users.push(user_name);
+      connected_users[user_id] = user_name;
       // Send the username and user list
       socket.broadcast.emit('connected', user_name);
-      // socket.broadcast.emit('update users', connected_users);
+      chat.emit('update users', connected_users);
+      messages.getHistory(function(err, history){
+        if(!err){
+          _.each(history, function(message){
+            socket.emit('load history', {id: message.user.nickname, msg: message.message })
+          });
+        } else {
+          callback(err);
+        }
+      });
     });
-    
-    
   });
+
   // message sent
   socket.on('user message', function(data){
     socket.get('user_name', function(err, user_name){
-      socket.broadcast.emit('user message', {id: user_name, msg: data});
+      messages.parser(data, function(message){
+        messages.save(user_id, message, null, function(err, message){
+          chat.emit('user message', {id: user_name, msg: message});
+        });
+         
+      });
     });
   });
   // Someone has disconnected
   socket.on('disconnect', function() {
     // get their username and remove it from the connected_users
     socket.get('user_name', function(err, user_name){
-      connected_users.splice(connected_users.indexOf(user_name), 1);
+      delete connected_users[user_id];
       socket.broadcast.emit('disconnected', user_name);
+      chat.emit('update users', connected_users);
       // socket.broadcast.emit('update users', connected_users);
     });
   });
 });
 
 app.get('/', routes.index);
-app.get('/connected_users', function(req, res){
-  if(req.isAuthenticated){
-    console.log("User list requested...");
-    res.send(connected_users);
-  } else {
-    res.send("Error 401");
-  }
-  
-})
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + server.address().port);

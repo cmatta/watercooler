@@ -6,6 +6,11 @@ body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
   background-color: @bodyBackground;
+  height:100%;
+}
+
+div {
+  display: block;
 }
 
 a {
@@ -23,16 +28,42 @@ a {
     background: @bodyBackground;
 }
 
+#messages {
+  width: 720px;
+  padding: 5px;
+}
+
+
 #messages>ul {
   list-style-type: none;
 }
 
-#messages>ul>li>span {
-  font-weight: bold;
-  padding: 5px;
-  border: 1px grey;
-}
 
-#messages img {
+.message img {
   max-width: 400px;
 }
+
+li.message {
+  position: relative;
+  padding-top: 20px;
+  padding-left: 68px;
+
+}
+.user {
+  text-align: right;
+}
+
+.username {
+  background: #eee;
+  width: 60px;
+  position: absolute;
+  left:0;
+  font-weight: bold;
+}
+
+.post-body {
+  text-align: left;
+}
+
+
+
