@@ -48,8 +48,19 @@ li.message {
   left: 0;
   font-weight: bold;
 }
+#post {
+  position: relative;
+}
 .post-body {
   text-align: left;
+  padding-right: 30px;
+}
+.post-time {
+  color: #ccc;
+  position: absolute;
+  padding-top: 20px;
+  top: 0px;
+  right: 0px;
 }
 .youtube-thumb {
   position: relative;

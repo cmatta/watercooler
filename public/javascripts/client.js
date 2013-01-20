@@ -38,7 +38,7 @@
       $messages.append('<li class="status"><span>Connected</span> ' + user_name + '</li>');
     })
     .on('user message', function(data) {
-      postMessage(data.msg, data.id);
+      postMessage(data.msg, data.id, data.datetime);
     })
     .on('disconnected', function(user_name) {
       $messages.append('<li class="status"><span>Disconnected</span> ' + user_name + '</li>');
@@ -49,7 +49,7 @@
       $messages.html('');      
     })
     .on('load history', function(data){
-      postMessage(data.msg, data.id);
+      postMessage(data.msg, data.id, data.datetime);
     })
     .on('update users', function(connected_users){
       updateUserList(connected_users);
@@ -84,13 +84,16 @@
     // Listen to a `click` event on the submit button to the message through
     $("#msg-send").click(send);
 
-    function postMessage(msg, user){
+    function postMessage(msg, user, datetime){
+        var dt = new Date(datetime);
+        var datestring = dt.getHours() + ':' + dt.getMinutes();
         $messages.append('<li class="message"> \
                             <div class="post"> \
                               <div class="user"> \
-                              <span class="username">'+user+'</span> \
-                              <div class="post-body">'+msg+'</div> \
+                                <span class="username">' + user + '</span> \
+                                <div class="post-body">' + msg + ' </div> \
                               </div> \
+                              <div class="post-time">' + datestring + '</div> \
                             </div> \
                           </li>');
         $("#messages").scrollTop($("#messages")[0].scrollHeight);
@@ -111,7 +114,13 @@
       // Handle the drop...
       .bind('drop', function(ev) {
           var dt = ev.originalEvent.dataTransfer;
-          chat.emit('user message', dt.getData("text/uri-list"));
+
+          if(_.contains(dt.types, "text/plain")){
+            chat.emit('user message', dt.getData("text/plain"));
+          } else if(_.contains(dt.types, "text/uri-list")){
+            chat.emit('user message', dt.getData("text/uri-list"));
+          }
+          
           return false;
       });
 

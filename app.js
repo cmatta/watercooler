@@ -23,7 +23,7 @@ var express = require('express')
   , mongo_db = 'watercooler'
   , host = '1306fifteen.dyndns.org'
   , users = require('./controllers/users')
-  , messages = require('./controllers/messages');
+  , chat_messages = require('./controllers/messages');
 
 app.configure('production', function(){
   server_port = 80
@@ -181,10 +181,10 @@ chat.on('connection', function(socket){
       // Send the username and user list
       socket.broadcast.emit('connected', user_name);
       chat.emit('update users', connected_users);
-      messages.getHistory(function(err, history){
+      chat_messages.getHistory(function(err, history){
         if(!err){
           _.each(history, function(message){
-            socket.emit('load history', {id: message.user.nickname, msg: message.message })
+            socket.emit('load history', {id: message.user.nickname, msg: message.message, datetime: message.datetime })
           });
         } else {
           callback(err);
@@ -195,11 +195,10 @@ chat.on('connection', function(socket){
 
   // message sent
   socket.on('user message', function(data){
-    console.info(data);
     socket.get('user_name', function(err, user_name){
-      messages.parser(data, function(message){
-        messages.save(user_id, message, null, function(err, message){
-          chat.emit('user message', {id: user_name, msg: message});
+      chat_messages.parser(data, function(message){
+        chat_messages.save(user_id, message, null, function(err, saved_message){
+          chat.emit('user message', {id: user_name, msg: saved_message.message, datetime: saved_message.datetime});
         });
          
       });

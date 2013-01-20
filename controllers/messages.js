@@ -12,6 +12,7 @@ var getYoutubeInfo = function (url, callback) {
   var yt_url = 'https://gdata.youtube.com/feeds/api/videos/' + video_id + '?v=2&alt=jsonc';
   var return_url;
 
+  // connect to the YouTube api and get the information
   https.get(yt_url, function (res) {
     var body = '';
 
@@ -107,7 +108,7 @@ module.exports = {
           if (err) {
             callback(err);
           } else {
-            callback(null, message);
+            callback(null, new_message);
           }
         });
       } else {
