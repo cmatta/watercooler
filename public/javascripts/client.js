@@ -43,6 +43,11 @@
     .on('disconnected', function(user_name) {
       $messages.append('<li class="status"><span>Disconnected</span> ' + user_name + '</li>');
     })
+    .on('reconnect', function(){
+      var date = new Date();
+      console.log("reconnected: "+date);
+      $messages.html('');      
+    })
     .on('load history', function(data){
       postMessage(data.msg, data.id);
     })
@@ -90,42 +95,6 @@
                           </li>');
         $("#messages").scrollTop($("#messages")[0].scrollHeight);
     }
-
-
-    // function handleDragStart(e) {
-    //   this.style.opacity = '0.4';  // this / e.target is the source node.
-    // }
-
-    // function handleDragOver(e) {
-    //   e.preventDefault(); // Necessary. Allows us to drop.
-
-    //   return false;
-    // }
-
-    // function handleDrop(e) {
-    //   // this / e.target is current target element.
-    //   e.stopPropagation(); // stops the browser from redirecting.
-
-    //   console.log(e.dataTransfer.getData('image/png'));
-
-    //   return false;
-    // }
-
-
-    // function handleDragEnter(e) {
-    //   // this / e.target is the current hover target.
-    //   this.classList.add('over');
-    // }
-
-    // function handleDragLeave(e) {
-    //   this.classList.remove('over');  // this / e.target is previous target element.
-    // }
-
-    // document.querySelector('#main').addEventListener('dragstart', handleDragStart, false);
-    // document.querySelector('#main').addEventListener('dragenter', handleDragEnter, false);
-    // document.querySelector('#main').addEventListener('dragover', handleDragOver, false);
-    // document.querySelector('#main').addEventListener('dragleave', handleDragLeave, false);
-    // document.querySelector('#main').addEventListener('drop', handleDrop, false);
 
   })
 }).call(this);

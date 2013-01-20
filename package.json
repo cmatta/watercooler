@@ -22,7 +22,8 @@
     "underscore": "*",
     "connect": "*",
     "cookie": "*",
-    "URIjs": "*"
+    "URIjs": "*",
+    "validator": "*"
   }
 
 }

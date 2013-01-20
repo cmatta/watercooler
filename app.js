@@ -16,7 +16,6 @@ var express = require('express')
   , mongoStore = require('connect-mongo')(express)
   , passport = require('passport')
   , twitterStrategy = require('passport-twitter').Strategy
-  , URI = require('URIjs')
   , parseSignedCookie = require('connect').utils.parseSignedCookie
   , cookie = require('cookie')
   , server_port = 8888
@@ -127,13 +126,13 @@ io.configure(function(){
     data.sessionId = parseSignedCookie(data.cookie['express.sid'], session_settings.cookie_secret);
     sessionStore.get(data.sessionId, function(err, session){
       if(!session){
-        console.log("Sorry, couldn't find this session in the session store.");
+        console.info("Sorry, couldn't find this session in the session store.");
         accept('No session', false);
       } else if(err){
-        console.log(err);
+        console.warn(err);
         accept('Error: '+err, false);
       } else {
-        console.log("Session found in session store");
+        console.info("Session found in session store");
         data.session = session;
         accept(null, true);
       }
@@ -196,6 +195,7 @@ chat.on('connection', function(socket){
 
   // message sent
   socket.on('user message', function(data){
+    console.info(data);
     socket.get('user_name', function(err, user_name){
       messages.parser(data, function(message){
         messages.save(user_id, message, null, function(err, message){
@@ -215,6 +215,10 @@ chat.on('connection', function(socket){
       // socket.broadcast.emit('update users', connected_users);
     });
   });
+  // emit reconnect message to any reconnecting client
+  socket.on('reconnect', function() {
+    chat.emit('reconnect');
+  })
 });
 
 app.get('/', routes.index);

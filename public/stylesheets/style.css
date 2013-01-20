@@ -48,3 +48,15 @@ li.message {
 .post-body {
   text-align: left;
 }
+.youtube-thumb {
+  position: relative;
+}
+a.yt-video {
+  position: absolute;
+  display: block;
+  background: url("../images/youtube-play.png");
+  height: 61px;
+  width: 86px;
+  top: 105px;
+  left: 218px;
+}
