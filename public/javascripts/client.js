@@ -96,5 +96,24 @@
         $("#messages").scrollTop($("#messages")[0].scrollHeight);
     }
 
+
+    // Drag and drop code.
+    $('#messages, #msg')
+      .bind('dragenter', function(ev) {
+          return false;
+      })
+      .bind('dragleave', function(ev) {
+          return false;
+      })
+      .bind('dragover', function(ev) {
+          return false;
+      })
+      // Handle the drop...
+      .bind('drop', function(ev) {
+          var dt = ev.originalEvent.dataTransfer;
+          chat.emit('user message', dt.getData("text/uri-list"));
+          return false;
+      });
+
   })
 }).call(this);
