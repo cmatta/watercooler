@@ -23,6 +23,9 @@
     "connect": "*",
     "cookie": "*",
     "URIjs": "*",
-    "validator": "*"
+    "validator": "*",
+    "chai": "*",
+    "mocha": "*",
+    "socket-io.client"
   }
 }

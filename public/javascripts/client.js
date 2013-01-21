@@ -35,13 +35,14 @@
       console.error('unable to connect to chat', reason);
     })
     .on('connected', function(user_name) {
-      $messages.append('<li class="status"><span>Connected</span> ' + user_name + '</li>');
+      statusMessage("Connected: "+user_name);
     })
     .on('user message', function(data) {
-      postMessage(data.msg, data.id, data.datetime);
+      postMessage(data.msg, data.nickname, data.username, data.avatar, data.datetime);
+      $("#messages").scrollTop($("#messages")[0].scrollHeight);
     })
     .on('disconnected', function(user_name) {
-      $messages.append('<li class="status"><span>Disconnected</span> ' + user_name + '</li>');
+      statusMessage("Disconnected: "+user_name);
     })
     .on('reconnect', function(){
       var date = new Date();
@@ -49,7 +50,7 @@
       $messages.html('');      
     })
     .on('load history', function(data){
-      postMessage(data.msg, data.id, data.datetime);
+      postMessage(data.msg, data.nickname, data.username, data.avatar, data.datetime);
     })
     .on('update users', function(connected_users){
       updateUserList(connected_users);
@@ -84,24 +85,76 @@
     // Listen to a `click` event on the submit button to the message through
     $("#msg-send").click(send);
 
-    function postMessage(msg, user, datetime){
-        var dt = new Date(datetime);
-        var datestring = dt.getHours() + ':' + dt.getMinutes();
-        $messages.append('<li class="message"> \
-                            <div class="post"> \
-                              <div class="user"> \
-                                <span class="username">' + user + '</span> \
-                                <div class="post-body">' + msg + ' </div> \
+    function statusMessage(message){
+      var datetime = new Date();
+      var date_time = formatDateTime(datetime);
+      var status_message = '<li class="status pull-right"> \
+                              <div class="post"> \
+                                <div class="item-header"> \
+                                  <small class="post-time">' + date_time + '</small> \
+                                </div> \
+                                <p class="post-body status">' + message +'</p> \
                               </div> \
-                              <div class="post-time">' + datestring + '</div> \
-                            </div> \
-                          </li>');
-        $("#messages").scrollTop($("#messages")[0].scrollHeight);
+                            </li>';
+      $messages.append(status_message);
+      $("#messages").scrollTop($("#messages")[0].scrollHeight);
+    }
+
+    function postMessage(msg, nickname, username, avatar, datetime){
+        var date_string = formatDateTime(datetime);
+        var last_message = $('#messages>ul>li.message:last');
+        var last_message_user = $(last_message).find('.twitter-user').text().replace(/ /g, '').replace(/@/, '');
+        
+        if (last_message_user === username){
+          $('#messages>ul>li:last>div.post').append('<p class="post-body"><small class="post-time">' + date_string + '</small>' + msg + '</p>');
+        } else {
+          // set alternating backgrounds
+          var even_odd = "even";
+          var last_li = $('#messages>ul>li:last');
+          if (last_message && !$("#messages>ul>li").hasClass('status')){
+            if ($(last_message).hasClass('even')){
+              even_odd = "odd";
+            }
+          }
+
+          var message_html = '<li class="message ' + even_odd + '"> \
+                              <div class="post"> \
+                                <div class="item-header"> \
+                                  <a class="account-group" href="/users/' + username +'"> \
+                                  <img class="avatar" src="' + avatar + '" alt="' + username + '"> \
+                                  <strong class="fullname">' + nickname + '</strong> \
+                                  </a> \
+                                  <a class="twitter-user" href="http://twitter.com/#!/' + username + '">\
+                                  <span class="username" target="_blank">@' + username + '</span> </a> \
+                                </div> \
+                                <p class="post-body"><small class="post-time">' + date_string + '</small> \
+                                ' + msg +'</p> \
+                              </div> \
+                            </li>';
+
+          $messages.append(message_html);
+        }
+
+        var scrollBottom = $('#messages').scrollTop() + $('#messages').height();
+        $("#messages").scrollTop(scrollBottom);
     }
 
 
+    function formatDateTime(datetime){
+      var dt = new Date(datetime);
+      var hh = dt.getHours();
+      var mm = dt.getMinutes();
+      var ampm = "am";
+
+      if(hh > 12) { hh = hh - 12; ampm = "pm"; };
+      
+      if(hh < 10) { hh = "0"+hh};
+      if(mm < 10) { mm = "0"+mm};
+      return hh + ":" + mm + " " + ampm;
+    }
+
     // Drag and drop code.
-    $('#messages, #msg')
+    $('body')
       .bind('dragenter', function(ev) {
           return false;
       })

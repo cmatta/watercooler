@@ -101,6 +101,8 @@ app.configure(function(){
 app.configure('development', function(){
   app.use(express.errorHandler());
 });
+app.get('/', routes.index);
+app.get('/invites', routes.invites);
 
 // Redirect the user to Twitter for authentication.  When complete, Twitter
 // will redirect the user back to the application at
@@ -139,7 +141,7 @@ io.configure(function(){
     });
   });
 });
-
+io.set('log level', 1);
 var chat = io.of('/chat');
 var connected_users = {};
 
@@ -173,32 +175,40 @@ chat.on('connection', function(socket){
         });
       }
 
-      socket.set('user_name', nickname, function(){ socket.emit('ready'); });
+      socket.set('user_info', user, function(){ socket.emit('ready'); });
     }
 
-    socket.get('user_name', function(err, user_name){
-      connected_users[user_id] = user_name;
-      // Send the username and user list
-      socket.broadcast.emit('connected', user_name);
-      chat.emit('update users', connected_users);
-      chat_messages.getHistory(function(err, history){
-        if(!err){
-          _.each(history, function(message){
-            socket.emit('load history', {id: message.user.nickname, msg: message.message, datetime: message.datetime })
-          });
-        } else {
-          callback(err);
-        }
-      });
+    connected_users[user_id] = user.nickname;
+    // Send the username and user list
+    socket.broadcast.emit('connected', user.nickname);
+    chat.emit('update users', connected_users);
+    // now get the message history
+    chat_messages.getHistory(function(err, history){
+      if(!err){
+        _.each(history, function(message){
+          socket.emit('load history', {nickname: message.user.nickname, 
+                                      username: message.user.username,
+                                      msg: message.message, 
+                                      datetime: message.datetime,
+                                      avatar: message.user.user_images[0].value });
+        });
+      } else {
+        callback(err);
+      }
     });
   });
 
   // message sent
   socket.on('user message', function(data){
-    socket.get('user_name', function(err, user_name){
+    socket.get('user_info', function(err, user){
       chat_messages.parser(data, function(message){
         chat_messages.save(user_id, message, null, function(err, saved_message){
-          chat.emit('user message', {id: user_name, msg: saved_message.message, datetime: saved_message.datetime});
+          chat.emit('user message', {nickname: user.nickname,
+                                    username: user.username, 
+                                    msg: saved_message.message,
+                                    datetime: saved_message.datetime,
+                                    avatar: user.user_images[0].value
+                                    });
         });
          
       });
@@ -207,9 +217,9 @@ chat.on('connection', function(socket){
   // Someone has disconnected
   socket.on('disconnect', function() {
     // get their username and remove it from the connected_users
-    socket.get('user_name', function(err, user_name){
-      delete connected_users[user_id];
-      socket.broadcast.emit('disconnected', user_name);
+    socket.get('user_info', function(err, user){
+      delete connected_users[user.nickname];
+      socket.broadcast.emit('disconnected', user.nickname);
       chat.emit('update users', connected_users);
       // socket.broadcast.emit('update users', connected_users);
     });
@@ -219,8 +229,6 @@ chat.on('connection', function(socket){
     chat.emit('reconnect');
   })
 });
-
-app.get('/', routes.index);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + server.address().port);

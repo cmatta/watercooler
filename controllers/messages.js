@@ -104,23 +104,28 @@ module.exports = {
         new_message.user = user._id;
         new_message.message = message;
         new_message.datetime = new Date();
-        new_message.save(function (err) {
+        new_message.save(function (err, saved_message) {
           if (err) {
             callback(err);
           } else {
-            callback(null, new_message);
+            callback(null, saved_message);
           }
         });
       } else {
+        console.warn("Couldn't find user with id: "+user_id);
         callback(err);
       }
     });
   },
 
   getHistory: function (callback) {
+    // get the last 50 messages from today
+    var messages_back = 50;
     var time = new Date();
-    time.setTime(time.getTime() - (1000 * 60 * 60 * 3)); // look back 3 hours
-    Message.find().where('datetime').gt(time).sort('datetime').populate('user').exec(function (err, messages) {
+    time.setUTCHours(0);
+    time.setUTCMinutes(0);
+    time.setUTCSeconds(0);
+    Message.where('datetime').gt(time).sort('datetime').populate('user').exec(function (err, messages) {
       if (!err) {
         callback(null, messages);
       } else {

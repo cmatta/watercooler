@@ -17,6 +17,10 @@ a {
   color: #00B7FF;
 }
 
+img {
+  border: 0;
+}
+
 .chatbox {
   height: 620px;
   background: white;
@@ -33,53 +37,82 @@ a {
 }
 
 #messages {
-  width: 720px;
   padding: 5px;
 }
 
 
 #messages>ul {
   list-style-type: none;
-}
-
-
-.message img {
-  max-width: 400px;
+  margin: 0;
 }
 
 li.message {
-  position: relative;
-  padding-top: 20px;
-  padding-left: 68px;
-
+  
 }
-.user {
-  text-align: right;
+
+.message img {
+  max-width: 480px;
+}
+
+.fullname {
+  color: #333;  
 }
 
 .username {
-  background: #eee;
-  width: 60px;
-  position: absolute;
-  left:0;
-  font-weight: bold;
+  font-size: 12px
 }
 
-#post {
-  position: relative;  
+.twitter-user {
+  display: none;
+  color: #ccc;
+}
+
+.avatar {
+  position: absolute;
+  top: 12px;
+  left: 10px;  
+}
+
+img.avatar {
+  width: 48px;
+  height: 48px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+.post {
+  position: relative;
+  padding-top: 12px;
+  padding-left: 68px;
+  padding-right: 20px;
 }
 
 .post-body {
   text-align: left;
-  padding-right: 30px;
 }
 
 .post-time {
+  display: none;
+  color: #bbb;
+  position: relative;
+  float: right;
+  margin-top: 1px;
+}
+
+p.post-body:hover .post-time {
+  display: block;
+}
+
+.status{
   color: #ccc;
-  position: absolute;
-  padding-top: 20px;
-  top: 0px;
-  right: 0px;
+}
+
+.odd { 
+  background: rgba(245, 245, 245, 0.3);
+}
+
+p.post-body:hover .twitter-user {
+  display: inline-block;
 }
 
 .youtube-thumb {
@@ -92,8 +125,8 @@ a.yt-video {
   background: url("../images/youtube-play.png");
   height: 61px;
   width: 86px;
-  top: 105px;
-  left: 218px;
+  top: 155px;
+  left: 240px;
 }
 
 

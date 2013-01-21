@@ -1,0 +1,11 @@
+extends layout
+
+block content
+
+  div#invite-box.modal
+    p.modal-header Invite Users
+    div.modal-body
+      form(action="/sendinvite" method="POST")
+        label Twitter Username
+        input(type="text" name="twitter-user")
+          

@@ -1,6 +1,6 @@
  Watercooler Chat:
- ☐ set messages layout
-   ☐ add time to messages
+ ✔ set messages layout - work with rick @done (13-01-21 14:35)
+   ✔ add time to messages @done (13-01-20 17:20)
  ✔ setup persistence @done (13-01-19 21:32)
    ✔ mongodb messages collection @done (13-01-19 21:32)
    ✔ load today's messages @done (13-01-19 21:32)
@@ -8,5 +8,13 @@
  ✔ get drag and drop to post images/urls/videos working @done (13-01-20 12:36)
  ☐ Use bootstrap to show alerts: https://github.com/JasonGiedymin/express-messages-bootstrap
  ☐ Add room support
- ☐ messages should show twitter icon
- ☐ user names can be a header on the top of the post?
+ ✔ messages should show twitter icon @done (13-01-21 14:36)
+ ✔ user names can be a header on the top of the post? @done (13-01-21 14:36)
+ ☐ implent archives
+ ☐ implement invite form
+ ☐ hide/show images 
+ ☐ support vimeo videos
+ ☐ do alternating backgrounds for messages of different users
+ ☐ maybe only show the avatar on the first message of a block of messages for the same user
+ ☐ blink title bar on messages change
+ 
