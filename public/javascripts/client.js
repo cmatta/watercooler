@@ -88,12 +88,9 @@
     function statusMessage(message){
       var datetime = new Date();
       var date_time = formatDateTime(datetime);
-      var status_message = '<li class="status pull-right"> \
+      var status_message = '<li class="status"> \
                               <div class="post"> \
-                                <div class="item-header"> \
-                                  <small class="post-time">' + date_time + '</small> \
-                                </div> \
-                                <p class="post-body status">' + message +'</p> \
+                                <p class="post-body">' + message + ' - ' + date_time+'</p> \
                               </div> \
                             </li>';
       $messages.append(status_message);
@@ -102,20 +99,20 @@
 
     function postMessage(msg, nickname, username, avatar, datetime){
         var date_string = formatDateTime(datetime);
-        var last_message = $('#messages>ul>li.message:last');
+        var last_message = $('#messages>ul>li:last');
         var last_message_user = $(last_message).find('.twitter-user').text().replace(/ /g, '').replace(/@/, '');
         
-        if (last_message_user === username){
+        if (!$(last_message).hasClass('status') && last_message_user === username){
           $('#messages>ul>li:last>div.post').append('<p class="post-body"><small class="post-time">' + date_string + '</small>' + msg + '</p>');
         } else {
           // set alternating backgrounds
           var even_odd = "even";
           var last_li = $('#messages>ul>li:last');
-          if (last_message && !$("#messages>ul>li").hasClass('status')){
-            if ($(last_message).hasClass('even')){
-              even_odd = "odd";
-            }
+          
+          if ($(last_message).hasClass('even')){
+            even_odd = "odd";
           }
+          
 
           var message_html = '<li class="message ' + even_odd + '"> \
                               <div class="post"> \

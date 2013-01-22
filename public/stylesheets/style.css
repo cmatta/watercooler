@@ -77,6 +77,10 @@ img.avatar {
 p.post-body:hover .post-time {
   display: block;
 }
+.status {
+  text-align: center;
+  color: #ccc;
+}
 .odd {
   background: rgba(245, 245, 245, 0.3);
 }
