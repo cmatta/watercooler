@@ -5,7 +5,18 @@
   $(document).ready(function() {
     // Setup
     // -----
-    
+    //
+    //
+    // Variable to hold weather or not the window has focus.
+    var window_focus;
+
+    $(window).focus(function() {
+      window_focus = true;
+    })
+    .blur(function() {
+      window_focus = false;
+    });
+
     // Create the chat connection object, as well as the references to our DOM 
     // handlers for input and recording output
     var chat = io.connect('http://1306fifteen.dyndns.org:8888/chat')
@@ -29,7 +40,7 @@
 
     // chat.io listeners
     // --------------------
-    
+    var history_loaded = false;
     // 
     chat.on('connect_failed', function(reason){
       console.error('unable to connect to chat', reason);
@@ -47,26 +58,42 @@
     .on('reconnect', function(){
       var date = new Date();
       console.log("reconnected: "+date);
-      $messages.html('');      
+      if (history_loaded === false){
+        $messages.html(''); 
+      } else {
+        statusMessage("Reconnected");
+      }   
     })
     .on('load history', function(data){
-      postMessage(data.msg, data.nickname, data.username, data.avatar, data.datetime);
+      if (history_loaded === true){
+        return;
+      } else {
+        loadHistory(data);
+        history_loaded = true;
+      }
     })
     .on('update users', function(connected_users){
       updateUserList(connected_users);
     });
 
     function updateUserList(connected_users){
-      console.log(connected_users);
       var user_list = "<small>Who's Here</small><ul>";
       for(var user_id in connected_users){
-        console.log(connected_users[user_id]);
         user_list += "<li>"+connected_users[user_id]+"</li>";
       }
       user_list += "</ul>";
-    
       $userlist.html(user_list);
       return false;
+    }
+
+    function loadHistory (data){
+      _.each(data, function(message){
+        postMessage(message.message,
+                    message.user.nickname,
+                    message.user.username,
+                    message.user.user_images[0].value,
+                    message.datetime);
+      });
     }
 
     // User interaction
@@ -102,7 +129,7 @@
         var last_message = $('#messages>ul>li:last');
         var last_message_user = $(last_message).find('.twitter-user').text().replace(/ /g, '').replace(/@/, '');
         
-        if (!$(last_message).hasClass('status') && last_message_user === username){
+        if ($(last_message).hasClass('message') && last_message_user === username){
           $('#messages>ul>li:last>div.post').append('<p class="post-body"><small class="post-time">' + date_string + '</small>' + msg + '</p>');
         } else {
           // set alternating backgrounds
@@ -112,7 +139,6 @@
           if ($(last_message).hasClass('even')){
             even_odd = "odd";
           }
-          
 
           var message_html = '<li class="message ' + even_odd + '"> \
                               <div class="post"> \
@@ -124,8 +150,7 @@
                                   <a class="twitter-user" href="http://twitter.com/#!/' + username + '">\
                                   <span class="username" target="_blank">@' + username + '</span> </a> \
                                 </div> \
-                                <p class="post-body"><small class="post-time">' + date_string + '</small> \
-                                ' + msg +'</p> \
+                                <p class="post-body"><small class="post-time">' + date_string + '</small><span class="message-body">' + msg +'</span></p> \
                               </div> \
                             </li>';
 
@@ -133,7 +158,22 @@
         }
 
         var scrollBottom = $('#messages').scrollTop() + $('#messages').height();
+        
         $("#messages").scrollTop(scrollBottom);
+        
+        if(history_loaded === true){
+          $.titleAlert(nickname + " says...", {
+              requireBlur:true,
+              stopOnFocus:true,
+              duration:10000,
+              interval:500
+          });
+
+          if(window_focus === false){
+            sendNotification(avatar, "New Message from "+nickname, msg);
+          }
+        }
+
     }
 
 
@@ -173,6 +213,34 @@
           
           return false;
       });
+
+      // check for HTML 5 notifications support
+      // you can omit the 'window' keyword
+      if (webkitNotifications) {
+        console.log("Notifications are supported!");
+        if (webkitNotifications.checkPermission() == 1){
+          $('#top-row>div:first').append('<button id="enable-notifications" class="btn btn-mini pull-right">Enable Notifications</button>')
+        }
+      } else {
+        console.log("Notifications are not supported for this Browser/OS version yet.");
+      }
+
+      // Add listener to permission button
+      $('#enable-notifications').click(function () {
+          webkitNotifications.requestPermission(function(){
+            console.log("...requesting permission for notifications.");
+            if (webkitNotifications.checkPermission() == 0){
+              $('#enable-notifications').remove();
+            }
+          });
+      });
+
+      function sendNotification(image, title, message) {
+        if(webkitNotifications.checkPermission() === 0){
+          var notification = webkitNotifications.createNotification(image, title, message);
+          notification.show();
+        }
+      }
 
   })
 }).call(this);

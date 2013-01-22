@@ -121,11 +121,11 @@ module.exports = {
   getHistory: function (callback) {
     // get the last 50 messages from today
     var messages_back = 50;
-    var time = new Date();
-    time.setUTCHours(0);
-    time.setUTCMinutes(0);
-    time.setUTCSeconds(0);
-    Message.where('datetime').gt(time).sort('datetime').populate('user').exec(function (err, messages) {
+    // var time = new Date();
+    // time.setUTCHours(0);
+    // time.setUTCMinutes(0);
+    // time.setUTCSeconds(0);
+    Message.find().limit(messages_back).sort('-datetime').populate('user').exec(function (err, messages) {
       if (!err) {
         callback(null, messages);
       } else {

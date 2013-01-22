@@ -185,13 +185,9 @@ chat.on('connection', function(socket){
     // now get the message history
     chat_messages.getHistory(function(err, history){
       if(!err){
-        _.each(history, function(message){
-          socket.emit('load history', {nickname: message.user.nickname, 
-                                      username: message.user.username,
-                                      msg: message.message, 
-                                      datetime: message.datetime,
-                                      avatar: message.user.user_images[0].value });
-        });
+        reversed_history = history.sort(function(a, b){ return a.datetime - b.datetime});
+        socket.emit('load history', reversed_history);
+        
       } else {
         callback(err);
       }
