@@ -1,31 +1,32 @@
 {
-  "name": "watercooler",
-  "version": "0.0.1",
-  "private": true,
-  "engines": {
-    "node": "0.8.x",
-    "npm":  "1.1.x"
-  },
-  "scripts": {
-    "start": "node app"
-  },
-  "dependencies": {
-    "express": "3.0.0rc4",
-    "jade": "*",
-    "less-middleware": "*",
-    "socket.io": "*",
-    "connect-mongo": "*",
-    "mongoose": "*",
-    "passport": "*",
-    "passport-twitter": "*",
-    "mongoose-findorcreate": "*",
-    "underscore": "*",
-    "connect": "*",
-    "cookie": "*",
-    "URIjs": "*",
-    "validator": "*",
-    "chai": "*",
-    "mocha": "*",
-    "socket-io.client"
-  }
+    "name": "watercooler",
+    "version": "0.0.1",
+    "private": true,
+    "engines": {
+        "node": "0.8.x",
+        "npm": "1.1.x"
+    },
+    "scripts": {
+        "start": "node app"
+    },
+    "dependencies": {
+        "express": "3.0.0rc4",
+        "jade": "*",
+        "less-middleware": "*",
+        "socket.io": "*",
+        "connect-mongo": "*",
+        "mongoose": "*",
+        "passport": "*",
+        "passport-twitter": "*",
+        "mongoose-findorcreate": "*",
+        "underscore": "*",
+        "connect": "*",
+        "cookie": "*",
+        "URIjs": "*",
+        "validator": "*",
+        "backbone": "*",
+        "backbone.io": "*",
+        "chai": "*",
+        "mocha": "*"
+    }
 }

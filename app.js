@@ -9,9 +9,6 @@ var express = require('express')
   , path = require('path')
   , _ = require('underscore')
   , app = express()
-  , http = require('http')
-  , server = http.createServer(app)
-  , io = require('socket.io').listen(server)
   , mongoose = require('mongoose')
   , mongoStore = require('connect-mongo')(express)
   , passport = require('passport')
@@ -19,33 +16,51 @@ var express = require('express')
   , parseSignedCookie = require('connect').utils.parseSignedCookie
   , cookie = require('cookie')
   , server_port = 8888
+  , chat_port = server_port
   , mongo_db_string = 'mongodb://127.0.0.1/'
   , mongo_db = 'watercooler'
   , host = '1306fifteen.dyndns.org'
-  , users = require('./controllers/users')
-  , chat_messages = require('./controllers/messages');
+  , users = require('./providers/users')
+  , chat_messages = require('./providers/messages');
 
-app.configure('production', function(){
-  server_port = 80
-  , host = 'watercooler-chat.herokuapp.com'
-  , mongo_db_string = 'mongodb://watercooler:sh4rp13@ds047447.mongolab.com:47447/'
-  , mongo_db = 'heroku_app10937405'
+app.configure('development', function(){
+  twitter_consumer_key = 'Q64dysI0Lmm8EFiNudZw';
+  twitter_consumer_secret = 'J8fbyPfwIYVqoByZyI0n6Ht9EWts1nlhu53JB2FcY';
+  twitter_callback_url = 'http://'+host+':'+server_port+'/auth/twitter/callback';
 });
 
+app.configure('production', function(){
+  var fs = require('fs');
+  var env = JSON.parse(fs.readFileSync('/home/dotcloud/environment.json', 'utf-8'));
+  server_port = 8080;
+  chat_port = 80;
+  mongo_db_string = env['DOTCLOUD_DB_MONGODB_URL']+'/';
+  host = env['DOTCLOUD_WWW_HTTP_HOST'];
+  twitter_consumer_key = 'ceuQboT48EiYqCdGZ7ZKaw';
+  twitter_consumer_secret = '2Ifgixahv8zeGthHV7rzro11msn5VH99ufFcMGpioA';
+  twitter_callback_url = 'http://'+host+'/auth/twitter/callback';
+});
+
+
+var http = require('http')
+, server = http.createServer(app)
+, backboneio = require('backbone.io')
+, io = require('socket.io').listen(server);
+
 server.listen(server_port);
-mongoose.connect(mongo_db_string+mongo_db);
+mongoose.connect(mongo_db_string + mongo_db);
 
 var session_settings = {
-  db: 'watercooler',
+  db: mongo_db,
   mongoose_connection: mongoose.connections[0],
   cookie_secret: 'hippiejohnny'
 }
 
 // passport middleware
 passport.use(new twitterStrategy({
-    consumerKey: 'ceuQboT48EiYqCdGZ7ZKaw',
-    consumerSecret: '2Ifgixahv8zeGthHV7rzro11msn5VH99ufFcMGpioA',
-    callbackURL: "http://"+host+":"+server_port+"/auth/twitter/callback"
+    consumerKey: twitter_consumer_key,
+    consumerSecret: twitter_consumer_secret,
+    callbackURL: twitter_callback_url
   },
   function(token, tokenSecret, profile, done){
     // Look for the user in the database
@@ -97,11 +112,18 @@ app.configure(function(){
 
 });
 
+// send the server port to the client.js via the index route
+function setServerPort(req, res, next){
+  if(!req.session.chat_port){
+    req.session.chat_port = chat_port;
+  }
+  if(!req.session.chat_host){
+    req.session.chat_host = host;
+  }
+  next();
+}
 
-app.configure('development', function(){
-  app.use(express.errorHandler());
-});
-app.get('/', routes.index);
+app.get('/', setServerPort, routes.index);
 app.get('/invites', routes.invites);
 
 // Redirect the user to Twitter for authentication.  When complete, Twitter
@@ -124,21 +146,25 @@ app.get('/logout', function(req, res){
 // Configure socket.io authorization settings for 'chat' namespace
 io.configure(function(){
   io.of('/chat').authorization(function(data, accept){
-    data.cookie = cookie.parse(data.headers.cookie);
-    data.sessionId = parseSignedCookie(data.cookie['express.sid'], session_settings.cookie_secret);
-    sessionStore.get(data.sessionId, function(err, session){
-      if(!session){
-        console.info("Sorry, couldn't find this session in the session store.");
-        accept('No session', false);
-      } else if(err){
-        console.warn(err);
-        accept('Error: '+err, false);
-      } else {
-        console.info("Session found in session store");
-        data.session = session;
-        accept(null, true);
-      }
-    });
+    if(data.headers.cookie){
+      data.cookie = cookie.parse(data.headers.cookie);
+      data.sessionId = parseSignedCookie(data.cookie['express.sid'], session_settings.cookie_secret);
+      sessionStore.get(data.sessionId, function(err, session){
+        if(!session){
+          console.info("Sorry, couldn't find this session in the session store.");
+          accept('No session', false);
+        } else if(err){
+          console.warn(err);
+          accept('Error: '+err, false);
+        } else {
+          console.info("Session found in session store");
+          data.session = session;
+          accept(null, true);
+        }
+      });
+    } else {
+      return accept('No Cookie transmitted', false);
+    }
   });
 });
 io.set('log level', 1);
@@ -180,7 +206,7 @@ chat.on('connection', function(socket){
 
     connected_users[user_id] = user.nickname;
     // Send the username and user list
-    socket.broadcast.emit('connected', user.nickname);
+    socket.broadcast.emit('connected', user);
     chat.emit('update users', connected_users);
     // now get the message history
     chat_messages.getHistory(function(err, history){
@@ -199,12 +225,7 @@ chat.on('connection', function(socket){
     socket.get('user_info', function(err, user){
       chat_messages.parser(data, function(message){
         chat_messages.save(user_id, message, null, function(err, saved_message){
-          chat.emit('user message', {nickname: user.nickname,
-                                    username: user.username, 
-                                    msg: saved_message.message,
-                                    datetime: saved_message.datetime,
-                                    avatar: user.user_images[0].value
-                                    });
+          chat.emit('user message', saved_message, user);
         });
          
       });
@@ -215,7 +236,7 @@ chat.on('connection', function(socket){
     // get their username and remove it from the connected_users
     socket.get('user_info', function(err, user){
       delete connected_users[user.nickname];
-      socket.broadcast.emit('disconnected', user.nickname);
+      socket.broadcast.emit('disconnected', user);
       chat.emit('update users', connected_users);
       // socket.broadcast.emit('update users', connected_users);
     });

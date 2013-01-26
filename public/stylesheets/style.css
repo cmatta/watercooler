@@ -65,6 +65,7 @@ img.avatar {
   padding-right: 20px;
 }
 .post-body {
+  position: relative;
   text-align: left;
 }
 .post-time {
@@ -77,6 +78,9 @@ img.avatar {
 p.post-body:hover .post-time {
   display: block;
 }
+a.account-group:hover .twitter-user {
+  display: inline;
+}
 .status {
   text-align: center;
   color: #ccc;
@@ -84,10 +88,7 @@ p.post-body:hover .post-time {
 .odd {
   background: rgba(245, 245, 245, 0.3);
 }
-p.post-body:hover .twitter-user {
-  display: inline-block;
-}
-.youtube-thumb {
+.youtube {
   position: relative;
 }
 a.yt-video {
@@ -97,5 +98,5 @@ a.yt-video {
   height: 61px;
   width: 86px;
   top: 155px;
-  left: 240px;
+  left: 197px;
 }

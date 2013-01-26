@@ -2,6 +2,11 @@ extends layout
 
 block content
   div#main.container-fluid
+    script(src="/javascripts/jquery.min.js")
+    script(src="/javascripts/underscore.js")
+    script(src="/javascripts/backbone.js")
+    script(src="/javascripts/handlebars.js")
+    script(src="/javascripts/jquery.titlealert.js")
     script(src="/socket.io/socket.io.js")
     div#top-row.row-fluid
       div.span10
@@ -19,4 +24,8 @@ block content
           div.input-append
             input#msg.appendedInputButton.span10(type="text")
             button#msg-send.btn(type="button") Send
+  script(type="text/javascript")
+    chat_host = "#{chat_host}";
+    chat_port = "#{chat_port}";
+  script(src="/javascripts/waitForImages.js")
   script(src="/javascripts/client.js")

@@ -19,7 +19,7 @@
 
     // Create the chat connection object, as well as the references to our DOM 
     // handlers for input and recording output
-    var chat = io.connect('http://1306fifteen.dyndns.org:8888/chat')
+    var chat = io.connect(chat_host + ':' + chat_port + '/chat')
       , $messages = $('#messages>ul')
       , $input = $('#msg')
       , $button = $('#submit')
@@ -38,6 +38,38 @@
       $input.val('')
     }
 
+    
+
+    var User = Backbone.Model;
+
+    var UserList = Backbone.Collection.extend({
+      model: User
+    });
+
+    var Message = Backbone.Model;
+
+    var Chat = Backbone.Collection.extend({
+      model: Message
+    });
+
+    var chats = new Chat;
+    chats.on("add", function(message){
+      console.log("Message: " + message.get('message'));
+    });
+
+    var user_list = new UserList;
+    user_list.on("add", function(user){
+      console.log("User %s logged in.", user.get('nickname'));
+    });
+
+    user_list.on("remove", function(user){
+      console.log("User %s logged out.", user.get('nickname'));
+    });
+
+    user_list.on("change", function(){
+      console.log(user_list);
+    });
+
     // chat.io listeners
     // --------------------
     var history_loaded = false;
@@ -45,15 +77,21 @@
     chat.on('connect_failed', function(reason){
       console.error('unable to connect to chat', reason);
     })
-    .on('connected', function(user_name) {
-      statusMessage("Connected: "+user_name);
+    .on('connected', function(user) {
+      user_list.add(user);
+      statusMessage("Connected: "+user.nickname);
     })
-    .on('user message', function(data) {
-      postMessage(data.msg, data.nickname, data.username, data.avatar, data.datetime);
-      $("#messages").scrollTop($("#messages")[0].scrollHeight);
+    .on('user message', function(message, user) {
+      postMessage(message.message,
+                    user.nickname,
+                    user.username,
+                    user.user_images[0].value,
+                    message.datetime);
+      chats.add(message);
     })
-    .on('disconnected', function(user_name) {
-      statusMessage("Disconnected: "+user_name);
+    .on('disconnected', function(user) {
+      user_list.remove(user);
+      statusMessage("Disconnected: "+user.nickname);
     })
     .on('reconnect', function(){
       var date = new Date();
@@ -87,6 +125,7 @@
     }
 
     function loadHistory (data){
+      chats.add(data);
       _.each(data, function(message){
         postMessage(message.message,
                     message.user.nickname,
@@ -157,16 +196,18 @@
           $messages.append(message_html);
         }
 
-        var scrollBottom = $('#messages').scrollTop() + $('#messages').height();
-        
-        $("#messages").scrollTop(scrollBottom);
+        var scrollBottom = $('#messages').scrollTop() + $('#messages>ul').height();
+
+        $("#messages>ul").waitForImages(function(){
+          $("#messages").scrollTop(scrollBottom);
+        });
         
         if(history_loaded === true){
           $.titleAlert(nickname + " says...", {
               requireBlur:true,
               stopOnFocus:true,
               duration:10000,
-              interval:500
+              interval:800
           });
 
           if(window_focus === false){
@@ -215,7 +256,6 @@
       });
 
       // check for HTML 5 notifications support
-      // you can omit the 'window' keyword
       if (webkitNotifications) {
         console.log("Notifications are supported!");
         if (webkitNotifications.checkPermission() == 1){
@@ -236,7 +276,7 @@
       });
 
       function sendNotification(image, title, message) {
-        if(webkitNotifications.checkPermission() === 0){
+        if (webkitNotifications.checkPermission() === 0){
           var notification = webkitNotifications.createNotification(image, title, message);
           notification.show();
         }

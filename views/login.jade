@@ -6,13 +6,4 @@ block content
   div#login-box.modal
     p.modal-header Log in with Twitter
     div.modal-body
-      button#sign-in.btn.btn-primary Log In
-
-
-  script
-    $(document).ready(function(){
-
-      $("#sign-in").click(function(){
-          window.location = '/auth/twitter';
-        });
-    });
+      a#sign-in.btn.btn-primary(href='/auth/twitter') Log In
