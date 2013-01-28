@@ -169,7 +169,7 @@ io.configure(function(){
 });
 io.set('log level', 1);
 var chat = io.of('/chat');
-var connected_users = {};
+var connected_users = [];
 
 chat.on('connection', function(socket){
   var hs = socket.handshake;
@@ -204,14 +204,14 @@ chat.on('connection', function(socket){
       socket.set('user_info', user, function(){ socket.emit('ready'); });
     }
 
-    connected_users[user_id] = user.nickname;
+    connected_users.push(user);
     // Send the username and user list
     socket.broadcast.emit('connected', user);
     chat.emit('update users', connected_users);
     // now get the message history
     chat_messages.getHistory(function(err, history){
       if(!err){
-        reversed_history = history.sort(function(a, b){ return a.datetime - b.datetime});
+        var reversed_history = history.sort(function(a, b){ return a.datetime - b.datetime});
         socket.emit('load history', reversed_history);
         
       } else {
@@ -224,7 +224,7 @@ chat.on('connection', function(socket){
   socket.on('user message', function(data){
     socket.get('user_info', function(err, user){
       chat_messages.parser(data, function(message){
-        chat_messages.save(user_id, message, null, function(err, saved_message){
+        chat_messages.save(user._id, message, null, function(err, saved_message){
           chat.emit('user message', saved_message, user);
         });
          
@@ -235,7 +235,10 @@ chat.on('connection', function(socket){
   socket.on('disconnect', function() {
     // get their username and remove it from the connected_users
     socket.get('user_info', function(err, user){
-      delete connected_users[user.nickname];
+      var user_index = connected_users.indexOf(user);
+      if(user_index !== -1){
+        connected_users.splice(user_index, 1);
+      }
       socket.broadcast.emit('disconnected', user);
       chat.emit('update users', connected_users);
       // socket.broadcast.emit('update users', connected_users);

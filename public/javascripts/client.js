@@ -38,55 +38,111 @@
       $input.val('')
     }
 
-    
-
-    var User = Backbone.Model;
+    var User = Backbone.Model.extend({
+      idAttribute: "_id"
+    });
 
     var UserList = Backbone.Collection.extend({
       model: User
     });
 
-    var Message = Backbone.Model;
+    var UsersView = Backbone.View.extend({
+      el: $('#users'),
+      render: function(){
+        var users = this.collection.toJSON();
+        var template_html = $('#users-list-template').html();
+        var template = Handlebars.compile(template_html);
+        this.$el.html(template({users: users}));
+        return this;
+      }
+    });
+
+    var ChatView = Backbone.View.extend({
+      el: $('#message-list',
+      render: function(){
+        var messages = this.collection.toJSON();
+
+        return this;
+      }
+    });
+
+    var MessageView = Backbone.View.extend({
+      el: $('#message-list'),
+      render: function(){
+        var message = this.message.toJSON();
+        var template = Handlebars.compile($('#message-template').html());
+        this.$el.append(template({message: message}));
+
+        // Scroll to the bottom
+        var scrollBottom = $('#messages').scrollTop() + $('#messages>ul').height();
+        $("#messages>ul").waitForImages(function(){
+          $("#messages").scrollTop(scrollBottom);
+        });
+
+        var user = this.message.get('user');
+        $.titleAlert(user.nickname + " says...", {
+              requireBlur:true,
+              stopOnFocus:true,
+              duration:10000,
+              interval:800
+          });
+
+        if(window_focus === false){
+          sendNotification(avatar, "New Message from "+nickname, msg);
+        }
+        return this;
+      }
+    });
+
+    var Message = Backbone.Model.extend({
+      initialize: function(){
+        var user_info = this.get('user');
+        // move the avatar to somewhere more convenient
+        user_info.avatar = user_info.user_images[0].value;
+        this.set('date_string', formatDateTime(this.get('datetime')));
+        this.set({user: user_info});
+      }
+    });
 
     var Chat = Backbone.Collection.extend({
       model: Message
     });
 
     var chats = new Chat;
+    
+    chats.comparator = function(message){
+      return message.get("datetime");
+    };
+
     chats.on("add", function(message){
+      console.log(message);
       console.log("Message: " + message.get('message'));
     });
 
     var user_list = new UserList;
-    user_list.on("add", function(user){
-      console.log("User %s logged in.", user.get('nickname'));
-    });
+    var user_view = new UsersView({collection: user_list});
+    var chat_view = new ChatView({collection: chats});
+    
+    // Event listeners
+    chat_view.listenTo(chats, 'add', chat_view.render);
+    chat_view.listenTo(chats, 'remove', chat_view.render);
 
-    user_list.on("remove", function(user){
-      console.log("User %s logged out.", user.get('nickname'));
-    });
-
-    user_list.on("change", function(){
-      console.log(user_list);
-    });
+    user_view.listenTo(user_list, 'add', user_view.render);
+    user_view.listenTo(user_list, 'remove', user_view.render);
 
     // chat.io listeners
     // --------------------
-    var history_loaded = false;
     // 
     chat.on('connect_failed', function(reason){
       console.error('unable to connect to chat', reason);
     })
     .on('connected', function(user) {
-      user_list.add(user);
+      var this_user = new User(user);
+      user_list.add(this_user);
       statusMessage("Connected: "+user.nickname);
     })
     .on('user message', function(message, user) {
-      postMessage(message.message,
-                    user.nickname,
-                    user.username,
-                    user.user_images[0].value,
-                    message.datetime);
+      message.user = user
       chats.add(message);
     })
     .on('disconnected', function(user) {
@@ -96,44 +152,15 @@
     .on('reconnect', function(){
       var date = new Date();
       console.log("reconnected: "+date);
-      if (history_loaded === false){
-        $messages.html(''); 
-      } else {
-        statusMessage("Reconnected");
-      }   
     })
     .on('load history', function(data){
-      if (history_loaded === true){
-        return;
-      } else {
-        loadHistory(data);
-        history_loaded = true;
+      if(chats.length < data){
+        chats.update(data);
       }
     })
     .on('update users', function(connected_users){
-      updateUserList(connected_users);
+      user_list.update(connected_users);
     });
-
-    function updateUserList(connected_users){
-      var user_list = "<small>Who's Here</small><ul>";
-      for(var user_id in connected_users){
-        user_list += "<li>"+connected_users[user_id]+"</li>";
-      }
-      user_list += "</ul>";
-      $userlist.html(user_list);
-      return false;
-    }
-
-    function loadHistory (data){
-      chats.add(data);
-      _.each(data, function(message){
-        postMessage(message.message,
-                    message.user.nickname,
-                    message.user.username,
-                    message.user.user_images[0].value,
-                    message.datetime);
-      });
-    }
 
     // User interaction
     // ----------------
@@ -161,60 +188,6 @@
                             </li>';
       $messages.append(status_message);
       $("#messages").scrollTop($("#messages")[0].scrollHeight);
-    }
-
-    function postMessage(msg, nickname, username, avatar, datetime){
-        var date_string = formatDateTime(datetime);
-        var last_message = $('#messages>ul>li:last');
-        var last_message_user = $(last_message).find('.twitter-user').text().replace(/ /g, '').replace(/@/, '');
-        
-        if ($(last_message).hasClass('message') && last_message_user === username){
-          $('#messages>ul>li:last>div.post').append('<p class="post-body"><small class="post-time">' + date_string + '</small>' + msg + '</p>');
-        } else {
-          // set alternating backgrounds
-          var even_odd = "even";
-          var last_li = $('#messages>ul>li:last');
-          
-          if ($(last_message).hasClass('even')){
-            even_odd = "odd";
-          }
-
-          var message_html = '<li class="message ' + even_odd + '"> \
-                              <div class="post"> \
-                                <div class="item-header"> \
-                                  <a class="account-group" href="/users/' + username +'"> \
-                                  <img class="avatar" src="' + avatar + '" alt="' + username + '"> \
-                                  <strong class="fullname">' + nickname + '</strong> \
-                                  </a> \
-                                  <a class="twitter-user" href="http://twitter.com/#!/' + username + '">\
-                                  <span class="username" target="_blank">@' + username + '</span> </a> \
-                                </div> \
-                                <p class="post-body"><small class="post-time">' + date_string + '</small><span class="message-body">' + msg +'</span></p> \
-                              </div> \
-                            </li>';
-
-          $messages.append(message_html);
-        }
-
-        var scrollBottom = $('#messages').scrollTop() + $('#messages>ul').height();
-
-        $("#messages>ul").waitForImages(function(){
-          $("#messages").scrollTop(scrollBottom);
-        });
-        
-        if(history_loaded === true){
-          $.titleAlert(nickname + " says...", {
-              requireBlur:true,
-              stopOnFocus:true,
-              duration:10000,
-              interval:800
-          });
-
-          if(window_focus === false){
-            sendNotification(avatar, "New Message from "+nickname, msg);
-          }
-        }
-
     }
 
 

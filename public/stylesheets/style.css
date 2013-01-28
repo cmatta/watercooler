@@ -20,10 +20,12 @@ img {
   overflow-y: scroll;
   word-wrap: break-word;
 }
-#userlist {
+#users {
   background: #fffef5;
+  overflow-y: hidden;
+  overflow-x: hidden;
 }
-#userlist > ul {
+#user-list {
   list-style-type: none;
 }
 #messages {
@@ -37,6 +39,7 @@ img {
   max-width: 480px;
 }
 .fullname {
+  font-weight: bold;
   color: #333;
 }
 .username {

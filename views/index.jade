@@ -1,13 +1,15 @@
 extends layout
 
+block append head
+  script(src="/javascripts/jquery.min.js")
+  script(src="/javascripts/underscore.js")
+  script(src="/javascripts/backbone.js")
+  script(src="/javascripts/handlebars.js")
+  script(src="/javascripts/jquery.titlealert.js")
+  script(src="/socket.io/socket.io.js")
+  
 block content
   div#main.container-fluid
-    script(src="/javascripts/jquery.min.js")
-    script(src="/javascripts/underscore.js")
-    script(src="/javascripts/backbone.js")
-    script(src="/javascripts/handlebars.js")
-    script(src="/javascripts/jquery.titlealert.js")
-    script(src="/socket.io/socket.io.js")
     div#top-row.row-fluid
       div.span10
         small Logged in as <span id="user_name" userid=#{user._id}>#{user.displayName}</span> (<a href="/logout">Log Out</a>)
@@ -15,9 +17,7 @@ block content
     div#middle-row.row-fluid
       div#messages.chatbox.well.span10
         ul#message-list
-      div#userlist.chatbox.span2
-        small Who's Here
-        ul
+      div#users.chatbox.span2
     div#bottom-row.row-fluid
       div.input-append
         div#input.span10
@@ -29,3 +29,26 @@ block content
     chat_port = "#{chat_port}";
   script(src="/javascripts/waitForImages.js")
   script(src="/javascripts/client.js")
+  
+  script#users-list-template(type="text/x-handlebars-template")
+    small Whos Here
+      ul#user-list
+      {{#each users}}
+      li.username {{this.nickname}}
+      {{/each}}
+  
+  script#message-template(type="text/x-handlebars-template")
+    {{#each messages}}
+    li.message
+      div.post
+        div.item-header
+          a.account-group(href="/usrs/{{this.user.username}}")
+            img.avatar(src="{{this.user.avatar}}", alt="{{this.user.username}}")
+            span.fullname {{this.user.nickname}}
+          a.twitter-user(href="http://twitter.com/#!/{{this.user.username}}", target="_blank")
+            span.username @{{this.user.username}}
+        p.post-body
+          small.post-time {{this.date_string}}
+          span.message-body {{{this.message}}}
+    {{/each}}
+  
