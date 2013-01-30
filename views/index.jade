@@ -27,6 +27,7 @@ block content
   script(type="text/javascript")
     chat_host = "#{chat_host}";
     chat_port = "#{chat_port}";
+    chat_view = {};
   script(src="/javascripts/waitForImages.js")
   script(src="/javascripts/client.js")
   
@@ -38,17 +39,15 @@ block content
       {{/each}}
   
   script#message-template(type="text/x-handlebars-template")
-    {{#each messages}}
     li.message
       div.post
         div.item-header
-          a.account-group(href="/usrs/{{this.user.username}}")
-            img.avatar(src="{{this.user.avatar}}", alt="{{this.user.username}}")
-            span.fullname {{this.user.nickname}}
-          a.twitter-user(href="http://twitter.com/#!/{{this.user.username}}", target="_blank")
-            span.username @{{this.user.username}}
+          a.account-group(href="/usrs/{{message.user.username}}")
+            img.avatar(src="{{message.user.avatar}}", alt="{{message.user.username}}")
+            span.fullname {{message.user.nickname}}
+          a.twitter-user(href="http://twitter.com/#!/{{message.user.username}}", target="_blank")
+            span.username @{{message.user.username}}
         p.post-body
-          small.post-time {{this.date_string}}
-          span.message-body {{{this.message}}}
-    {{/each}}
+          small.post-time {{message.date_string}}
+          span.message-body {{{message.message}}}
   

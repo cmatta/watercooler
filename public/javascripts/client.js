@@ -56,41 +56,29 @@
         return this;
       }
     });
-
+    // where do I initialize each message and append it to the 
+    // #message-list element? 
     var ChatView = Backbone.View.extend({
-      el: $('#message-list',
-      render: function(){
+      el: $('#message-list'),
+      initialize : function() {
         var messages = this.collection.toJSON();
-
+        _.each(messages, function(message){
+          var message_view = new MessageView(message);
+          this.render(message_view);
+        });
+      },
+      render: function(message_view){
+        console.log(message_view);
+        this.$el.append(message_view.render);
         return this;
       }
     });
 
     var MessageView = Backbone.View.extend({
-      el: $('#message-list'),
+      template: Handlebars.compile($('#message-template').html()),
       render: function(){
         var message = this.message.toJSON();
-        var template = Handlebars.compile($('#message-template').html());
-        this.$el.append(template({message: message}));
-
-        // Scroll to the bottom
-        var scrollBottom = $('#messages').scrollTop() + $('#messages>ul').height();
-        $("#messages>ul").waitForImages(function(){
-          $("#messages").scrollTop(scrollBottom);
-        });
-
-        var user = this.message.get('user');
-        $.titleAlert(user.nickname + " says...", {
-              requireBlur:true,
-              stopOnFocus:true,
-              duration:10000,
-              interval:800
-          });
-
-        if(window_focus === false){
-          sendNotification(avatar, "New Message from "+nickname, msg);
-        }
-        return this;
+        return this.template({message: message});
       }
     });
 
@@ -109,19 +97,22 @@
     });
 
     var chats = new Chat;
-    
+
     chats.comparator = function(message){
       return message.get("datetime");
     };
 
+    // debug
     chats.on("add", function(message){
       console.log(message);
       console.log("Message: " + message.get('message'));
     });
 
+
     var user_list = new UserList;
     var user_view = new UsersView({collection: user_list});
-    var chat_view = new ChatView({collection: chats});
+
+    chat_view = new ChatView({collection: chats});
     
     // Event listeners
     chat_view.listenTo(chats, 'add', chat_view.render);
@@ -155,7 +146,7 @@
     })
     .on('load history', function(data){
       if(chats.length < data){
-        chats.update(data);
+        chats.reset(data);
       }
     })
     .on('update users', function(connected_users){
@@ -247,6 +238,26 @@
             }
           });
       });
+
+      function notify(){
+        // Scroll to the bottom
+        var scrollBottom = $('#messages').scrollTop() + $('#messages>ul').height();
+        $("#messages>ul").waitForImages(function(){
+          $("#messages").scrollTop(scrollBottom);
+        });
+
+        var user = this.message.get('user');
+        $.titleAlert("New message...", {
+              requireBlur:true,
+              stopOnFocus:true,
+              duration:10000,
+              interval:800
+          });
+
+        if(window_focus === false){
+          sendNotification(avatar, "New Message from "+nickname, msg);
+        }
+      }
 
       function sendNotification(image, title, message) {
         if (webkitNotifications.checkPermission() === 0){
