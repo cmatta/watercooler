@@ -75,20 +75,17 @@
     });
 
     var MessageView = Backbone.View.extend({
-      template: Handlebars.compile($('#message-template').html()),
       render: function(){
         var message = this.message.toJSON();
-        return this.template({message: message});
+        var template = Handlebars.compile($('#message-template').html()),
+        return template({message: message});
       }
     });
 
     var Message = Backbone.Model.extend({
       initialize: function(){
-        var user_info = this.get('user');
-        // move the avatar to somewhere more convenient
-        user_info.avatar = user_info.user_images[0].value;
-        this.set('date_string', formatDateTime(this.get('datetime')));
-        this.set({user: user_info});
+        console.log(this);
+        this.set('date_string', formatDateTime(this.get('datetime')));  
       }
     });
 

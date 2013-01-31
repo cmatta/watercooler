@@ -43,7 +43,7 @@ block content
       div.post
         div.item-header
           a.account-group(href="/usrs/{{message.user.username}}")
-            img.avatar(src="{{message.user.avatar}}", alt="{{message.user.username}}")
+            img.avatar(src="{{message.user.profile_image_url}}", alt="{{message.user.username}}")
             span.fullname {{message.user.nickname}}
           a.twitter-user(href="http://twitter.com/#!/{{message.user.username}}", target="_blank")
             span.username @{{message.user.username}}

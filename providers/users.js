@@ -6,14 +6,10 @@ var UsersSchema = new Schema({
         "provider_id": {type: String, required: true},
         "displayName": {type: String, requred: true},
         "username": {type: String, required: true},
-        "user_images": [
-            { 
-                "value": {type: String }
-            }
-        ],
+        "profile_image_url":  {type: String },
         "nickname": {type: String},
         "location": {type: String},
-        "join_date": {type: Date, required: true},
+        "join_date": {type: Date},
         "name" : {
             "familyName": {type: String},
             "givenName": {type: String},
@@ -52,7 +48,7 @@ module.exports = {
     newUser.displayName = profile.displayName;
     newUser.name = profile.name;
     newUser.emails = profile.emails;
-    newUser.user_images = profile.photos;
+    newUser.profile_image_url = profile._json.profile_image_url;
     newUser.username = profile.username;
     newUser.join_date = new Date();
     newUser.location = profile._json.location;
@@ -71,6 +67,12 @@ module.exports = {
   findOrCreate: function(profile, callback){
     module.exports.findUserByProfile(profile, function(err, foundUser){
       if(foundUser){
+        // update the user's avatar
+          if(foundUser.profile_image_url == undefined){
+            console.log("Updating user Avatar.")
+          foundUser.profile_image_url = profile._json.profile_image_url;
+          foundUser.save;
+        }
         callback(null, foundUser);
       } else {
         module.exports.createUserWithProfile(profile, function(err, createdUser){
